@@ -12,6 +12,12 @@ import (
 var dbname1 = "engine3"
 var dbname2 = "engine4"
 
+func jsonSystems_Nodes() []byte {
+	firstSystem := Systems{Name: "nodes"}
+
+	return toJson(firstSystem)
+}
+
 func TestInit(t *testing.T) {
 
 	fmt.Printf("INIT:\n")
@@ -46,7 +52,7 @@ func TestRegister(t *testing.T) {
 		t.FailNow()
 	}
 
-	uuid, err = db.RegisterLocalNode("test3.towerpower.co", "{ \"name\" : \"engine3\" }")
+	uuid, err = db.RegisterLocalNode("test3.towerpower.co", jsonSystems_Nodes())
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
@@ -60,7 +66,7 @@ func TestRegister(t *testing.T) {
 		t.FailNow()
 	}
 
-	uuid, err = db.RegisterLocalNode("test4.towerpower.co", "{\"name\" : \"engine4\" }")
+	uuid, err = db.RegisterLocalNode("test4.towerpower.co", jsonSystems_Nodes())
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()

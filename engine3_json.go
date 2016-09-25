@@ -26,25 +26,3 @@ func fromJson(b []byte, v interface{}) {
 	}
 
 }
-
-func test() {
-	m := Systems{"Alice"}
-
-	b, err := json.Marshal(m)
-	if err != nil {
-		log.Panic(err.Error)
-	}
-
-	b1 := []byte(`{"Name":"Alice"}`)
-
-	err = json.Unmarshal(b1, &m)
-	if err != nil {
-		log.Panic(err.Error)
-	}
-
-	err = json.Unmarshal(b, &m)
-	if err != nil {
-		log.Panic(err.Error)
-	}
-
-}
