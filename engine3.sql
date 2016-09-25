@@ -118,12 +118,11 @@ CREATE OR REPLACE FUNCTION nodes.register( _url text, _data json) RETURNS UUID  
                INSERT INTO nodes.systems( id, url, data, clockid, tsn  )
                  VALUES ( _uuid, _url, _data, nodes.clockid(), nextval( 'nodes.tsn' ) );
             ELSE
-               IF old_data <> _data THEN
-                  /* re-register and update with new tsn */
-                  UPDATE nodes.systems 
-                     SET data = _data, tsn = nextval( 'nodes.tsn' )
+               /* re-register and update with new tsn */
+               UPDATE nodes.systems 
+                   SET data = _data, tsn = nextval( 'nodes.tsn' )
                    WHERE url = _url;
-               END IF;
+               SELECT id FROM nodes.systems WHERE url = _url INTO _uuid;
             END IF;
      END IF;
 
@@ -190,8 +189,11 @@ CREATE OR REPLACE FUNCTION nodes.checkHigh( _clockid bigint ) RETURNS  bigint AS
    BEGIN
       SELECT tsn from nodes.highwatermarks where clockid = _clockid
         INTO new_tsn;
-
+      IF FOUND THEN
         RETURN new_tsn;
+      ELSE
+        RETURN 0;
+      END IF;
    END
 $$ LANGUAGE plpgsql;
 
