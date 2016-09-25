@@ -40,27 +40,15 @@ CREATE TABLE nodes.base (
 CREATE TABLE nodes.systems ( LIKE nodes.base );
 
 /* 
- * sequence counter (local) (manged via clockid)
+ * sequence counter (local) (managed via clockid)
  * 
  * We have not more than one sequence per schema.
- * Tihe squence is also to be identified by the 
+ * The sequence is also to be identified by the 
  * clockid (in the nodes.systems table)
  */
 CREATE SEQUENCE nodes.tsn;
+CREATE SEQUENCE nodes.clockid;
 
-/* 
- * Information about local clock (nodes.tsn)
- * 
- * Store clockid (to be created by "register" function)
- * 
- *(We will need a central place to issue clockids later)
- *
- * single row table , key = 0
- */
-CREATE TABLE nodes.clockid (
-  clock   int primary key,
-  clockid bigint
-);
 
 /* 
  * local clock
@@ -81,7 +69,10 @@ CREATE OR REPLACE FUNCTION nodes.clockid() RETURNS bigint AS $$
    DECLARE 
       _clockid bigint;
    BEGIN
-      select clockid from nodes.clockid where clock = 0 into _clockid;
+      _clockid = nextval( 'nodes.clockid' );
+      IF _clockid = 0 THEN
+        _clockid = nextval( 'nodes.clockid' );
+      END IF;
       RETURN _clockid;
    END
 $$ LANGUAGE plpgsql;
@@ -96,34 +87,24 @@ CREATE OR REPLACE FUNCTION nodes.register( _url text, _data json) RETURNS UUID  
       old_data json;
    BEGIN
      /* do we have a clock already */
-     SELECT clockid FROM nodes.clockid WHERE clock = 0 INTO _clockid;
+     SELECT data FROM nodes.systems WHERE url = _url INTO old_data;
+
      IF NOT FOUND THEN
 
             /* no: initialize it */
             _uuid := uuid_generate_v4();
 
-            INSERT INTO nodes.clockid( clock, clockid )
-                  VALUES ( 0, nextval( 'nodes.tsn' ) );
+            SELECT nodes.clockid() INTO _clockid;
 
             INSERT INTO nodes.systems( id, url, data, clockid, tsn  )
-              VALUES ( _uuid, _url, _data, nodes.clockid(), nextval( 'nodes.tsn' ) );
+              VALUES ( _uuid, _url, _data, _clockid, nextval( 'nodes.tsn' ) );
 
      ELSE
-            /* is it partially set up? */
-            SELECT data FROM nodes.systems WHERE url = _url INTO old_data;
-            IF NOT FOUND THEN
-               /* no: set up */
-               _uuid := uuid_generate_v4();
- 
-               INSERT INTO nodes.systems( id, url, data, clockid, tsn  )
-                 VALUES ( _uuid, _url, _data, nodes.clockid(), nextval( 'nodes.tsn' ) );
-            ELSE
-               /* re-register and update with new tsn */
-               UPDATE nodes.systems 
-                   SET data = _data, tsn = nextval( 'nodes.tsn' )
-                   WHERE url = _url;
-               SELECT id FROM nodes.systems WHERE url = _url INTO _uuid;
-            END IF;
+            /* re-register and update with new tsn */
+            UPDATE nodes.systems 
+            SET data = _data, tsn = nextval( 'nodes.tsn' )
+               WHERE url = _url;
+            SELECT id FROM nodes.systems WHERE url = _url INTO _uuid;
      END IF;
 
      RETURN _uuid;
