@@ -9,9 +9,10 @@ import (
 	"testing"
 )
 
+var dbname1 = "engine3"
+var dbname2 = "engine4"
+
 func TestInit(t *testing.T) {
-	dbname1 := "engine3"
-	dbname2 := "engine4"
 
 	fmt.Printf("INIT:\n")
 	_, err := GetDatabase(dbname1)
@@ -38,20 +39,33 @@ func TestRegister(t *testing.T) {
 	var uuid string
 
 	fmt.Printf("REGISTER:\n")
-	db, err := GetDatabase("engine3")
+	db, err := GetDatabase(dbname1)
 
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
 	}
 
-	uuid, err = db.RegisterLocalNode("test.towerpower.co", "{ \"name\" : \"nodes\" }")
+	uuid, err = db.RegisterLocalNode("test3.towerpower.co", "{ \"name\" : \"engine3\" }")
+	if err != nil {
+		fmt.Printf("PANIC %#v\n", err)
+		t.FailNow()
+	}
+	fmt.Printf("Register %v to %v\n", dbname1, uuid)
+
+	db, err = GetDatabase(dbname1)
+
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
 	}
 
-	fmt.Printf("Register to %v\n", uuid)
+	uuid, err = db.RegisterLocalNode("test4.towerpower.co", "{\"name\" : \"engine4\" }")
+	if err != nil {
+		fmt.Printf("PANIC %#v\n", err)
+		t.FailNow()
+	}
+	fmt.Printf("Register %v to %v\n", dbname2, uuid)
 
 }
 
