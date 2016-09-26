@@ -1,4 +1,4 @@
-* Database Schema for Energy Management Cloud
+/* Database Schema for Energy Management Cloud
  *
  * Version 3
  */
