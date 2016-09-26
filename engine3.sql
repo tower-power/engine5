@@ -44,7 +44,10 @@ CREATE TABLE nodes.systems ( LIKE nodes.base );
  * 
  * We have not more than one sequence per schema.
  * The sequence is also to be identified by the 
- * clockid (in the nodes.systems table)
+ * clockid 
+ *
+ * We generate a clockid via the nodes.clockid sequence
+ * seperately
  */
 CREATE SEQUENCE nodes.tsn;
 CREATE SEQUENCE nodes.clockid;
@@ -70,6 +73,7 @@ CREATE OR REPLACE FUNCTION nodes.clockid() RETURNS bigint AS $$
       _clockid bigint;
    BEGIN
       _clockid = nextval( 'nodes.clockid' );
+      /* should not be zero */
       IF _clockid = 0 THEN
         _clockid = nextval( 'nodes.clockid' );
       END IF;
@@ -123,6 +127,8 @@ CREATE TABLE nodes.highwatermarks (
 
 /* 
  * Operations Log (local)
+ *
+ * logs all change operations with clockid, tsn and tablename
  */
 CREATE TABLE nodes.oplog (
      
@@ -133,10 +139,15 @@ CREATE TABLE nodes.oplog (
      PRIMARY KEY( clockid, tsn )
 );
 
+/* Trigger function
+ * 
+ * to be executed when changes to data happen
+ */
 CREATE OR REPLACE FUNCTION onChange() RETURNS TRIGGER AS $$
      DECLARE
           _opcode text;
      BEGIN
+          /* I, U or D: Insert, Update, Delete */
           _opcode = left( TG_OP , 1 );
           
           INSERT INTO nodes.oplog( clockid, tsn, table_name, op ) 
