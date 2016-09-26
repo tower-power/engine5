@@ -137,7 +137,7 @@ CREATE OR REPLACE FUNCTION onChange() RETURNS TRIGGER AS $$
      DECLARE
      BEGIN
           INSERT INTO nodes.oplog( clockid, tsn, table_name, op ) 
-             VALUES (NEW.clockid, NEW.tsn, TG_TABLE_NAME, TG_OP ); 
+             VALUES (NEW.clockid, NEW.tsn, TG_TABLE_NAME, left(TG_OP,1) );  /* first letter is enough */
           RETURN NEW;
      END;
 $$ LANGUAGE plpgsql;
