@@ -135,9 +135,12 @@ CREATE TABLE nodes.oplog (
 
 CREATE OR REPLACE FUNCTION onChange() RETURNS TRIGGER AS $$
      DECLARE
+          _opcode text;
      BEGIN
+          _opcode = left( TG_OP , 1 );
+          
           INSERT INTO nodes.oplog( clockid, tsn, table_name, op ) 
-             VALUES (NEW.clockid, NEW.tsn, TG_TABLE_NAME, left(TG_OP,1) );  /* first letter is enough */
+               VALUES (NEW.clockid, NEW.tsn, TG_TABLE_NAME, _opcode );  /* first letter is enough */
           RETURN NEW;
      END;
 $$ LANGUAGE plpgsql;
@@ -152,6 +155,29 @@ CREATE OR REPLACE FUNCTION nodes.getRemoteHighs() RETURNS TABLE(  _clockid bigin
    BEGIN
      RETURN QUERY
         select clockid, tsn from nodes.highwatermarks;
+   END
+$$ LANGUAGE plpgsql;
+
+/* 
+ * Read the OPLOG
+ */
+CREATE OR REPLACE FUNCTION nodes.getOplog() RETURNS TABLE(  _table_name text, _clockid bigint, _tsn bigint, _op text ) AS $$
+   BEGIN
+     RETURN QUERY
+        SELECT table_name, clockid, tsn, op from nodes.oplog
+         ORDER BY clockid, tsn DESC;
+   END
+$$ LANGUAGE plpgsql;
+
+/* 
+ * Read the OPLOG tail
+ */
+CREATE OR REPLACE FUNCTION nodes.getOplogTail( in_clockid bigint, in_tsn bigint ) RETURNS TABLE(  _table_name text, _clockid bigint, _tsn bigint, _op text ) AS $$
+   BEGIN
+     RETURN QUERY
+        SELECT table_name, clockid, tsn, op from nodes.oplog
+         WHERE clockid = in_clockid and tsn > in_tsn
+         ORDER BY tsn  DESC;
    END
 $$ LANGUAGE plpgsql;
 
