@@ -118,8 +118,32 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE nodes.highwatermarks (
      clockid    bigint,
      tsn        bigint,
-     unique ( clockid, tsn )
+     PRIMARY KEY( clockid, tsn )
 );
+
+/* 
+ * Operations Log (local)
+ */
+CREATE TABLE nodes.oplog (
+     
+     clockid    bigint,
+     tsn        bigint,
+     table_name text,  /* TG_TABLE_NAME */
+     op         text,  /* TG_OP */
+     PRIMARY KEY( clockid, tsn )
+);
+
+CREATE OR REPLACE FUNCTION onChange() RETURNS TRIGGER AS $$
+     DECLARE
+     BEGIN
+          INSERT INTO nodes.oplog( clockid, tsn, table_name, op ) 
+             VALUES (NEW.clockid, NEW.tsn, TG_TABLE_NAME, TG_OP ); 
+          RETURN NEW;
+     END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER onChange BEFORE INSERT OR UPDATE OR DELETE ON nodes.systems
+  FOR EACH ROW EXECUTE PROCEDURE onChange();
 
 /* 
  * read the (received) high-water marks of remote nodes
