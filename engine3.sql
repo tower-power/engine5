@@ -166,30 +166,50 @@ CREATE OR REPLACE FUNCTION nodes.getRemoteHighs() RETURNS TABLE(  _clockid bigin
    BEGIN
      RETURN QUERY
         select clockid, tsn from nodes.highwatermarks;
-   END
+   END;
 $$ LANGUAGE plpgsql;
 
 /* 
  * Read the OPLOG
+ *
+ * Read all entries for all systems (clockid = 0) or for specified system
+ * ordered by time (tsn)
  */
-CREATE OR REPLACE FUNCTION nodes.getOplog() RETURNS TABLE(  _table_name text, _clockid bigint, _tsn bigint, _op text ) AS $$
+CREATE OR REPLACE FUNCTION nodes.getOplogPerSystem( in_clockid bigint ) RETURNS TABLE(  _table_name text, _clockid bigint, _tsn bigint, _op text ) AS $$
    BEGIN
-     RETURN QUERY
-        SELECT table_name, clockid, tsn, op from nodes.oplog
-         ORDER BY clockid, tsn DESC;
-   END
+     IF in_clockid = 0 THEN
+       RETURN QUERY
+         SELECT table_name, clockid, tsn, op from nodes.oplog
+          ORDER BY clockid, tsn DESC;
+     ELSE
+       RETURN QUERY
+         SELECT table_name, clockid, tsn, op from nodes.oplog
+          WHERE clockid = in_clockid
+          ORDER BY tsn DESC;
+     END IF;
+   END;
 $$ LANGUAGE plpgsql;
 
 /* 
  * Read the OPLOG tail
+ *
+ * Read entries higher with respect to time (tsn) for all systems (clockid = 0) or for specified system
+ * ordered by time (tsn)
  */
 CREATE OR REPLACE FUNCTION nodes.getOplogTail( in_clockid bigint, in_tsn bigint ) RETURNS TABLE(  _table_name text, _clockid bigint, _tsn bigint, _op text ) AS $$
    BEGIN
-     RETURN QUERY
-        SELECT table_name, clockid, tsn, op from nodes.oplog
-         WHERE clockid = in_clockid and tsn > in_tsn
-         ORDER BY tsn  DESC;
-   END
+     IF in_clockid = 0 THEN
+       RETURN QUERY
+          SELECT table_name, clockid, tsn, op from nodes.oplog
+           WHERE tsn > in_tsn
+           ORDER BY tsn  DESC;
+     ELSE
+       RETURN QUERY
+          SELECT table_name, clockid, tsn, op from nodes.oplog
+           WHERE clockid = in_clockid and tsn > in_tsn
+           ORDER BY tsn  DESC;
+     END IF;
+   END;
 $$ LANGUAGE plpgsql;
 
 /* 

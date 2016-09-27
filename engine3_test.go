@@ -151,3 +151,41 @@ func TestCheckHigh(t *testing.T) {
 
 	fmt.Printf("TestCheckHigh %v : %v\n", clockid, high)
 }
+
+func TestGetOpLog(t *testing.T) {
+	var ol Oplogs
+
+	fmt.Printf("GETOPLOGS:\n")
+	db, err := GetDatabase("engine3")
+
+	if err != nil {
+		fmt.Printf("PANIC %#v\n", err)
+		t.FailNow()
+	}
+
+	ol, err = db.GetOpLogs(0, 0)
+	if err != nil {
+		fmt.Printf("PANIC %#v\n", err)
+		t.FailNow()
+	}
+
+	fmt.Printf("Get OPLOGS Len %v Cap %v\n%v\n", len(ol), cap(ol), ol)
+}
+
+func TestSync(t *testing.T) {
+
+	fmt.Printf("SYNC:\n")
+	db1, err1 := GetDatabase("engine3")
+
+	if err1 != nil {
+		fmt.Printf("PANIC %#v\n", err1)
+		t.FailNow()
+	}
+	db2, err2 := GetDatabase("engine4")
+	if err2 != nil {
+		fmt.Printf("PANIC %#v\n", err2)
+		t.FailNow()
+	}
+
+	databaseSync(db1.dbconnect, db2.dbconnect)
+}

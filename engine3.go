@@ -27,7 +27,7 @@ func checkRows(trace string, rows *sql.Rows) {
 
 	length := len(cols)
 
-	fmt.Printf("%s ROWS: %v\n", trace, length)
+	fmt.Printf("%s COLS: %v\n", trace, length)
 
 	for i, colName := range cols {
 		// var raw_value = *(values[i].(*interface{}))
@@ -75,6 +75,9 @@ func newTSN2(dbconnect *sql.DB) int64 {
 }
 
 // Register node
+//
+// Register node at central server locally
+//
 func registerLocalNode(dbconnect *sql.DB, in_url string, in_data []byte) string {
 
 	var out_id string
