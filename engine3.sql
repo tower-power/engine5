@@ -50,7 +50,7 @@ CREATE TABLE nodes.systems ( LIKE nodes.base );
  * seperately
  */
 CREATE SEQUENCE nodes.tsn;
-CREATE SEQUENCE nodes.clockid;
+CREATE SEQUENCE nodes.clockidsn;
 
 
 /* 
@@ -68,14 +68,14 @@ $$ LANGUAGE plpgsql;
  * Returns the id of the local 'clock'
  *
  */
-CREATE OR REPLACE FUNCTION nodes.clockid() RETURNS bigint AS $$
+CREATE OR REPLACE FUNCTION nodes.clockidsn() RETURNS bigint AS $$
    DECLARE 
       _clockid bigint;
    BEGIN
-      _clockid = nextval( 'nodes.clockid' );
+      _clockid = nextval( 'nodes.clockidsn' );
       /* should not be zero */
       IF _clockid = 0 THEN
-        _clockid = nextval( 'nodes.clockid' );
+        _clockid = nextval( 'nodes.clockidsn' );
       END IF;
       RETURN _clockid;
    END
@@ -98,7 +98,7 @@ CREATE OR REPLACE FUNCTION nodes.register( _url text, _data json) RETURNS UUID  
             /* no: initialize it */
             _uuid := uuid_generate_v4();
 
-            SELECT nodes.clockid() INTO _clockid;
+            SELECT nodes.clockidsn() INTO _clockid;
 
             INSERT INTO nodes.systems( id, url, data, clockid, tsn  )
               VALUES ( _uuid, _url, _data, _clockid, nextval( 'nodes.tsn' ) );
@@ -239,4 +239,14 @@ CREATE OR REPLACE FUNCTION nodes.checkHigh( _clockid bigint ) RETURNS  bigint AS
    END
 $$ LANGUAGE plpgsql;
 
+/*
+ * Sync functions for nodes.systems
+ *
+CREATE OR REPLACE FUNCTION nodes.SyncGet_Systems( in_clockid bigint, in_tsn bigint) RETURNS nodes.systems AS $$
+   BEGIN
+     RETURN QUERY
+        select * from nodes.systems;
+   END
+$$ LANGUAGE plpgsql;
+ */
 
