@@ -42,7 +42,7 @@ func TestInit(t *testing.T) {
 
 func TestRegister(t *testing.T) {
 
-	var uuid string
+	var id int64
 
 	fmt.Printf("REGISTER:\n")
 	db, err := GetDatabase(dbname1)
@@ -52,12 +52,12 @@ func TestRegister(t *testing.T) {
 		t.FailNow()
 	}
 
-	uuid, err = db.RegisterLocalNode("test3.towerpower.co", jsonSystems_Nodes())
+	id, err = db.RegisterLocalNode("test3.towerpower.co", jsonSystems_Nodes())
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
 	}
-	fmt.Printf("Register %v to %v\n", dbname1, uuid)
+	fmt.Printf("Register %v to %d\n", dbname1, id)
 
 	db, err = GetDatabase(dbname1)
 
@@ -66,12 +66,12 @@ func TestRegister(t *testing.T) {
 		t.FailNow()
 	}
 
-	uuid, err = db.RegisterLocalNode("test4.towerpower.co", jsonSystems_Nodes())
+	id, err = db.RegisterLocalNode("test4.towerpower.co", jsonSystems_Nodes())
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
 	}
-	fmt.Printf("Register %v to %v\n", dbname2, uuid)
+	fmt.Printf("Register %v to %d\n", dbname2, id)
 
 }
 
@@ -181,11 +181,11 @@ func TestSync(t *testing.T) {
 		fmt.Printf("PANIC %#v\n", err1)
 		t.FailNow()
 	}
-	db2, err2 := GetDatabase("engine4")
+	db2, err2 := GetDatabase("master")
 	if err2 != nil {
 		fmt.Printf("PANIC %#v\n", err2)
 		t.FailNow()
 	}
 
-	databaseSync(db1.dbconnect, db2.dbconnect)
+	databaseSync(db2.dbconnect, db1.dbconnect)
 }

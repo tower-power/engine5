@@ -130,12 +130,20 @@ func getOpLogs(dbconnect *sql.DB, in_clockid int64, in_tsn int64) Oplogs {
  * Enti-entropy sync from dbconnect1 to dbconnect2
  */
 func databaseSync(dbconnect1 *sql.DB, dbconnect2 *sql.DB) {
+	var hwms1 HighWaterMarks
 	var hwms2 HighWaterMarks
 	var oplogs1 Oplogs
 
+	hwms1 = getRemoteHighs(dbconnect1)
+
+	fmt.Printf("HWM 2 received: %d rows\n", len(hwms2))
+	for i, hwm := range hwms1 {
+		fmt.Printf("HWM %d %v\n", i, hwm)
+	}
+
 	hwms2 = getRemoteHighs(dbconnect2)
 
-	fmt.Printf("HWM received: %d rows\n", len(hwms2))
+	fmt.Printf("HWM 1 received: %d rows\n", len(hwms2))
 	for i, hwm := range hwms2 {
 		fmt.Printf("HWM %d %v\n", i, hwm)
 	}

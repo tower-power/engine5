@@ -78,9 +78,9 @@ func newTSN2(dbconnect *sql.DB) int64 {
 //
 // Register node at central server locally
 //
-func registerLocalNode(dbconnect *sql.DB, in_url string, in_data []byte) string {
+func registerLocalNode(dbconnect *sql.DB, in_url string, in_data []byte) int64 {
 
-	var out_id string
+	var out_id int64
 
 	row := dbconnect.QueryRow("select nodes.register( $1, $2 )", in_url, in_data)
 	checkRow(row)
@@ -117,7 +117,7 @@ func (db *Database) NewNodesTSN() (tsn int64, err error) {
 // Intial Registration
 //
 // Package Export
-func (db *Database) RegisterLocalNode(in_url string, in_data []byte) (out_value string, err error) {
+func (db *Database) RegisterLocalNode(in_url string, in_data []byte) (out_value int64, err error) {
 
 	defer func() {
 

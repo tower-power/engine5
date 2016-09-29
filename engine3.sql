@@ -121,14 +121,14 @@ $body$ LANGUAGE plpgsql;
 /*
  * Registers the local node (initial)
  */
-CREATE OR REPLACE FUNCTION nodes.register( _url text, _data json) RETURNS UUID  AS $$
+CREATE OR REPLACE FUNCTION nodes.register( _url text, _data json) RETURNS bigint  AS $$
    DECLARE
       _uuid    uuid;
       _clockid bigint;
       old_data json;
    BEGIN
      /* do we have a clock already */
-     SELECT data FROM nodes.systems WHERE url = _url INTO old_data;
+     SELECT clockid FROM nodes.systems WHERE url = _url INTO _clockid;
 
      IF NOT FOUND THEN
 
@@ -145,10 +145,10 @@ CREATE OR REPLACE FUNCTION nodes.register( _url text, _data json) RETURNS UUID  
             UPDATE nodes.systems 
             SET data = _data, tsn = nextval( 'nodes.tsn' )
                WHERE url = _url;
-            SELECT id FROM nodes.systems WHERE url = _url INTO _uuid;
+            SELECT clockid FROM nodes.systems WHERE url = _url INTO _clockid;
      END IF;
 
-     RETURN _uuid;
+     RETURN _clockid;
 
    END
 $$ LANGUAGE plpgsql;
