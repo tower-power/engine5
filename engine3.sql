@@ -65,7 +65,8 @@ CREATE OR REPLACE FUNCTION nodes.new_tsn() RETURNS BIGINT AS $$
 $$ LANGUAGE plpgsql;
 
 /* 
- * Returns the id of the local 'clock'
+ * Returns the id of the 'clock' Sequence counter
+ * (O is never returned)
  *
  */
 CREATE OR REPLACE FUNCTION nodes.clockidsn() RETURNS bigint AS $$
@@ -80,6 +81,42 @@ CREATE OR REPLACE FUNCTION nodes.clockidsn() RETURNS bigint AS $$
       RETURN _clockid;
    END
 $$ LANGUAGE plpgsql;
+
+/* 
+ * myClockId
+ *
+ * returns the clockid of the clock sequence of the local database
+ *
+ * This is a template function, which will be overridden after 
+ * initialization.
+ *
+ * The clockID shoud never be zero!
+ * The function is supposed to return a constant (IMMUTABLE)
+ */
+CREATE OR REPLACE FUNCTION nodes.myclockid() RETURNS bigint AS $$ 
+      BEGIN
+       RETURN 0;
+      END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+/* 
+ * set my clockid
+ *
+ * internally called by registration to override the clockID
+ */
+CREATE OR REPLACE FUNCTION nodes.setmyclockid( _clockid bigint ) RETURNS VOID AS $body$ 
+   DECLARE 
+      sql1 text := 'CREATE OR REPLACE FUNCTION nodes.myclockid() RETURNS bigint AS $$
+                   BEGIN return ';
+      sql2 text := '; END;
+                   $$ LANGUAGE plpgsql IMMUTABLE;';
+      sql  text;
+   BEGIN
+     sql := sql1 || _clockid || sql2;
+     EXECUTE sql;
+   END;
+$body$ LANGUAGE plpgsql;
+
 
 /*
  * Registers the local node (initial)
