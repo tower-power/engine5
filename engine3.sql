@@ -192,8 +192,12 @@ CREATE OR REPLACE FUNCTION onChange() RETURNS TRIGGER AS $$
 
           UPDATE nodes.highwatermarks SET tsn = NEW.tsn WHERE clockid = NEW.clockid;
           IF NOT FOUND THEN
-            INSERT INTO nodes.highwatermarks( clockid, tsn ) 
-            VALUES (NEW.clockid, NEW.tsn );
+            BEGIN
+              INSERT INTO nodes.highwatermarks( clockid, tsn ) 
+              VALUES (NEW.clockid, NEW.tsn );
+            EXCEPTION WHEN unique_violation THEN
+              /* do nothing */
+            END; 
           END IF;
           RETURN NEW;
      END;
