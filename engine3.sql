@@ -46,7 +46,7 @@ CREATE TABLE nodes.systems ( LIKE nodes.base );
  * The sequence is also to be identified by the 
  * clockid 
  *
- * We generate a clockid via the nodes.clockid sequence
+ * We generate a clockid via the nodes.clockidsn sequence
  * seperately
  */
 CREATE SEQUENCE nodes.tsn;
@@ -159,7 +159,7 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE nodes.highwatermarks (
      clockid    bigint,
      tsn        bigint,
-     PRIMARY KEY( clockid, tsn )
+     PRIMARY KEY( clockid )
 );
 
 /* 
@@ -189,10 +189,17 @@ CREATE OR REPLACE FUNCTION onChange() RETURNS TRIGGER AS $$
           
           INSERT INTO nodes.oplog( clockid, tsn, table_name, op ) 
                VALUES (NEW.clockid, NEW.tsn, TG_TABLE_NAME, _opcode );  /* first letter is enough */
+
+          UPDATE nodes.highwatermarks SET tsn = NEW.tsn WHERE clockid = NEW.clockid;
+          IF NOT FOUND THEN
+            INSERT INTO nodes.highwatermarks( clockid, tsn ) 
+            VALUES (NEW.clockid, NEW.tsn );
+          END IF;
           RETURN NEW;
      END;
 $$ LANGUAGE plpgsql;
 
+/* All managed tables must be isted here */
 CREATE TRIGGER onChange BEFORE INSERT OR UPDATE OR DELETE ON nodes.systems
   FOR EACH ROW EXECUTE PROCEDURE onChange();
 
