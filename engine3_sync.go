@@ -133,6 +133,7 @@ func databaseSync(dbconnect1 *sql.DB, dbconnect2 *sql.DB) {
 	var hwms1 HighWaterMarks
 	var hwms2 HighWaterMarks
 	var oplogs1 Oplogs
+	var oplogs2 Oplogs
 
 	hwms1 = getRemoteHighs(dbconnect1)
 
@@ -148,8 +149,14 @@ func databaseSync(dbconnect1 *sql.DB, dbconnect2 *sql.DB) {
 		fmt.Printf("HWM %d %v\n", i, hwm)
 	}
 
+	oplogs2 = getOpLogs(dbconnect2, 0, 0)
+	fmt.Printf("OPS received: %d rows\n", len(oplogs2))
+	for i, ol := range oplogs2 {
+		fmt.Printf("2: OPS %d %v\n", i, ol)
+	}
+
 	oplogs1 = getOpLogs(dbconnect1, 0, 0)
-	fmt.Printf("OPS received: %d rows\n", len(oplogs1))
+	fmt.Printf("1: OPS received: %d rows\n", len(oplogs1))
 	for i, ol := range oplogs1 {
 		fmt.Printf("OPS %d %v\n", i, ol)
 	}
