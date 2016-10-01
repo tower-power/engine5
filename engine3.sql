@@ -8,6 +8,8 @@
  */
 /* UUIDs */
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+/* Crypto functions */
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE SCHEMA IF NOT EXISTS nodes;
 
@@ -24,13 +26,15 @@ CREATE SCHEMA IF NOT EXISTS nodes;
  * (To be discussed: do we need a UUID to identify the object in parallel)
  */
 CREATE TABLE nodes.base (
-    id      uuid,
+    ckey    bytea,    
+    cval    bytea,
     url     text,  
     data    json,
     clockid bigint,
     tsn     bigint,
     primary key(url),
-    unique (clockid, tsn )
+    unique (clockid, tsn ),
+    unique (ckey)
 );
 /* 
  * the table to describe all management nodes
@@ -123,28 +127,35 @@ $body$ LANGUAGE plpgsql;
  */
 CREATE OR REPLACE FUNCTION nodes.register( _url text, _data json) RETURNS bigint  AS $$
    DECLARE
-      _uuid    uuid;
+      _ckey    bytea;
+      _cval    bytea;
+      old_cval bytea;
       _clockid bigint;
       old_data json;
    BEGIN
      /* do we have a clock already */
      SELECT clockid FROM nodes.systems WHERE url = _url INTO _clockid;
 
+     _cval = digest( _data::text, 'md5' );
      IF NOT FOUND THEN
 
             /* no: initialize it */
-            _uuid := uuid_generate_v4();
+            _ckey := digest( _url, 'md5');
 
             SELECT nodes.clockidsn() INTO _clockid;
 
-            INSERT INTO nodes.systems( id, url, data, clockid, tsn  )
-              VALUES ( _uuid, _url, _data, _clockid, nextval( 'nodes.tsn' ) );
+            INSERT INTO nodes.systems( ckey, cval, url, data, clockid, tsn  )
+              VALUES ( _ckey, _cval, _url, _data, _clockid, nextval( 'nodes.tsn' ) );
 
      ELSE
-            /* re-register and update with new tsn */
-            UPDATE nodes.systems 
-            SET data = _data, tsn = nextval( 'nodes.tsn' )
-               WHERE url = _url;
+            /* check, if changed */
+            select cval from nodes.systems where url = _url into old_cval;
+            if old_cval <> _cval then
+              /* re-register and update with new tsn */
+              UPDATE nodes.systems 
+              SET cval = _cval, data = _data, tsn = nextval( 'nodes.tsn' )
+                 WHERE url = _url;
+            end if;
             SELECT clockid FROM nodes.systems WHERE url = _url INTO _clockid;
      END IF;
 
