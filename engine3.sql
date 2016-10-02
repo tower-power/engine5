@@ -23,7 +23,22 @@ CREATE SCHEMA IF NOT EXISTS nodes;
  * We further assume that the data, which describe the object can be encoded using 
  * JSON.
  *
- * (To be discussed: do we need a UUID to identify the object in parallel)
+ * An object has three kidn of keys:
+ * 
+ *  * URL : a url to give the object a name
+ *          (abrbitrary size string)
+ *  * clockid/tsn : two integers, which give unique time and space coordinate
+ *  *               (2 x 8 bytes)
+ *  * ckey : a digest of the url as a md5 code 
+ *           (16bytes)
+ *
+ * The value of the JSON data are as well recorded as a MD5 digest in 
+ * the cval field
+ * (16 bytes)
+ *
+ * On the Go side objects derived from nodes.base can be retrieved and managed using
+ * the "Things" datastructure and package.
+ *
  */
 CREATE TABLE nodes.base (
     ckey    bytea,    
