@@ -155,6 +155,13 @@ CREATE OR REPLACE FUNCTION nodes.register( _url text, _data json) RETURNS bigint
               UPDATE nodes.systems 
               SET cval = _cval, data = _data, tsn = nextval( 'nodes.tsn' )
                  WHERE url = _url;
+            else
+              select data from nodes.systems where url = _url into old_data;
+              if old_data::text <> _data::text then
+                UPDATE nodes.systems 
+                SET cval = _cval, data = _data, tsn = nextval( 'nodes.tsn' )
+                  WHERE url = _url;
+              end if;
             end if;
             SELECT clockid FROM nodes.systems WHERE url = _url INTO _clockid;
      END IF;
