@@ -59,3 +59,40 @@ func rowsToThings(rows *sql.Rows) Things {
 	fmt.Printf("returning things: %d rows\n", len(result))
 	return result
 }
+
+/*
+func getThings(dbconnect *sql.DB, in_url string, in_table string) Things {
+
+	var out_value
+	var statement string = "select * from " + "get" + in_table + "( $1 )"
+
+	row := dbconnect.QueryRow(statement, in_url)
+	checkRow(row)
+
+	err := row.Scan(&out_value)
+	checkErr(statement, err)
+
+
+}
+*/
+/*
+// Put a new value
+func putPowerData(dbconnect *sql.DB, in_key string, in_value string) {
+
+	_, err := dbconnect.Exec("select power.put( $1, $2 )", in_key, in_value)
+
+	checkErr("power.put", err)
+
+	return
+}
+
+// delete an entry
+func deletePowerData(dbconnect *sql.DB, in_key string) {
+
+	_, err := dbconnect.Exec("select power.delete( $1 )", in_key)
+
+	checkErr("power.delete", err)
+
+	return
+}
+*/

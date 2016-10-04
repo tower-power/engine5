@@ -48,8 +48,7 @@ CREATE TABLE nodes.base (
     clockid bigint,
     tsn     bigint,
     primary key(url),
-    unique (clockid, tsn ),
-    unique (ckey)
+    unique (clockid, tsn )
 );
 /* 
  * the table to describe all management nodes
@@ -216,18 +215,27 @@ CREATE TABLE nodes.oplog (
 CREATE OR REPLACE FUNCTION onChange() RETURNS TRIGGER AS $$
      DECLARE
           _opcode text;
+          _clockid bigint;
+          _tsn     bigint;
      BEGIN
           /* I, U or D: Insert, Update, Delete */
-          _opcode = left( TG_OP , 1 );
-          
+          _opcode = left( TG_OP , 1 ); /* first letter is enough */
+         
+          IF _opcode = 'D' THEN
+           _clockid = nodes.myclockid();
+           _tsn     = nodes.new_tsn();
+          ELSE
+           _clockid = NEW.clockid;
+           _tsn     = NEW.tsn;
+          END IF;
           INSERT INTO nodes.oplog( clockid, tsn, table_name, op ) 
-               VALUES (NEW.clockid, NEW.tsn, TG_TABLE_NAME, _opcode );  /* first letter is enough */
+               VALUES (_clockid, _tsn, TG_TABLE_NAME, _opcode );  
 
-          UPDATE nodes.highwatermarks SET tsn = NEW.tsn WHERE clockid = NEW.clockid;
+          UPDATE nodes.highwatermarks SET tsn = _tsn WHERE clockid = _clockid;
           IF NOT FOUND THEN
             BEGIN
               INSERT INTO nodes.highwatermarks( clockid, tsn ) 
-              VALUES (NEW.clockid, NEW.tsn );
+              VALUES (_clockid, _tsn );
             EXCEPTION WHEN unique_violation THEN
               /* do nothing */
             END; 
@@ -339,6 +347,42 @@ CREATE OR REPLACE FUNCTION nodes.checkHigh( _clockid bigint ) RETURNS  bigint AS
       END IF;
    END
 $$ LANGUAGE plpgsql;
+
+/* General Anti-Entropy functions : to be used for synchronization only */
+/* GET */
+CREATE OR REPLACE FUNCTION nodes.ae_get_systems( _clockid bigint, _tsn bigint ) RETURNS  SETOF nodes.base  AS $$
+   BEGIN
+      RETURN QUERY 
+        SELECT ckey, cval, url, data, clockid, tsn  from nodes.systems 
+           where clockid = _clockid and tsn = _tsn;
+   END;
+$$ LANGUAGE plpgsql;
+
+/* PUT */
+CREATE OR REPLACE FUNCTION nodes.ae_put_systems( _ckey bytea, _cval bytea, _url text, _data json, _clockid bigint, _tsn bigint ) RETURNS VOID AS $$
+   BEGIN
+      LOOP
+        BEGIN
+         INSERT INTO nodes.systems( ckey, cval, url, data, clockid, tsn ) 
+         VALUES (_ckey, _cval, _url, _data, _clockid, _tsn );
+         EXCEPTION WHEN unique_violation THEN
+           /*remove older versions, can there be more ?*/
+           DELETE FROM nodes.systems where url = _url AND clockid = _clockid and tsn < _tsn;
+        END;
+      END LOOP;
+   END;
+$$ LANGUAGE plpgsql;
+
+/* DELETE */
+CREATE OR REPLACE FUNCTION nodes.ae_delete_systems( _clockid bigint, _tsn bigint ) RETURNS VOID AS $$
+   BEGIN
+        BEGIN
+         DELETE FROM nodes.systems WHERE clockid = _clockid and tsn = _tsn; 
+        END;
+   END;
+$$ LANGUAGE plpgsql;
+
+
 
 /*
  * Sync functions for nodes.systems

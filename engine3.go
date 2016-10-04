@@ -92,7 +92,15 @@ func registerLocalNode(dbconnect *sql.DB, in_url string, in_data []byte) int64 {
 	return out_id
 }
 
+// Nodes Rest Functions
 //
+// GET
+// PUT
+// DELETE
+//
+// ....
+//
+
 // PACKAGE EXPORTS
 
 // From a given database object retrieve the next TSN
