@@ -60,21 +60,24 @@ func rowsToThings(rows *sql.Rows) Things {
 	return result
 }
 
-/*
-func getThings(dbconnect *sql.DB, in_url string, in_table string) Things {
+func rowToThing(row *sql.Row) Thing {
+	var t Thing
 
-	var out_value
+	err := row.Scan(&t.ckey, &t.cval, &t.url, &t.data, &t.clockid, &t.tsn)
+	checkErr("scan a thing", err)
+
+	return t
+}
+
+func getThing(dbconnect *sql.DB, in_url string, in_table string) Thing {
 	var statement string = "select * from " + "get" + in_table + "( $1 )"
 
 	row := dbconnect.QueryRow(statement, in_url)
 	checkRow(row)
 
-	err := row.Scan(&out_value)
-	checkErr(statement, err)
-
-
+	return rowToThing(row)
 }
-*/
+
 /*
 // Put a new value
 func putPowerData(dbconnect *sql.DB, in_key string, in_value string) {
