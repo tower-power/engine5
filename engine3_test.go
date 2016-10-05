@@ -9,6 +9,7 @@ import (
 	"testing"
 )
 
+var dbname0 = "master"
 var dbname1 = "engine3"
 var dbname2 = "engine4"
 
@@ -21,7 +22,16 @@ func jsonSystems_Nodes() []byte {
 func TestInit(t *testing.T) {
 
 	fmt.Printf("INIT:\n")
-	_, err := GetDatabase(dbname1)
+	_, err := GetDatabase(dbname0)
+
+	if err != nil {
+		fmt.Printf("PANIC %#v\n", err)
+		t.FailNow()
+	}
+
+	fmt.Printf("Connect to database %v\n", dbname0)
+
+	_, err = GetDatabase(dbname1)
 
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
@@ -45,7 +55,7 @@ func TestRegister(t *testing.T) {
 	var id int64
 
 	fmt.Printf("REGISTER:\n")
-	db, err := GetDatabase(dbname1)
+	db, err := GetDatabase(dbname0)
 
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
@@ -188,4 +198,16 @@ func TestSync(t *testing.T) {
 	}
 
 	databaseSync(db2.dbconnect, db1.dbconnect)
+}
+
+func TestSync_ae_001(t *testing.T) {
+
+	fmt.Printf("SYNC ANTI-ENTROPY testing first transport:\n")
+	db1, err1 := GetDatabase("master")
+
+	if err1 != nil {
+		fmt.Printf("PANIC %#v\n", err1)
+		t.FailNow()
+	}
+	_ = ae_get(db1.dbconnect, "systems", 1, 1)
 }

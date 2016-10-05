@@ -69,10 +69,12 @@ func rowToThing(row *sql.Row) Thing {
 	return t
 }
 
-func getThing(dbconnect *sql.DB, in_url string, in_table string) Thing {
-	var statement string = "select * from " + "get" + in_table + "( $1 )"
+func ae_get(dbconnect *sql.DB, in_name string, in_clockid int64, in_tsn int64) Thing {
+	var statement string = "select * from nodes.ae_get_" + in_name + "( $1, $2 )"
 
-	row := dbconnect.QueryRow(statement, in_url)
+	fmt.Printf("Statement: %s\n", statement)
+
+	row := dbconnect.QueryRow(statement, in_clockid, in_tsn)
 	checkRow(row)
 
 	return rowToThing(row)
