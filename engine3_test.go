@@ -69,34 +69,55 @@ func TestRegister(t *testing.T) {
 	}
 	fmt.Printf("Register master: %v to %d\n", dbname0, id)
 
-	db, err := GetDatabase(dbname1)
+	db1, err := GetDatabase(dbname1)
 
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
 	}
 
-	id, err = master.RegisterLocalNode(db, "test3.towerpower.co", jsonSystems_Nodes())
+	id, err = master.RegisterLocalNode(db1, "test3.towerpower.co", jsonSystems_Nodes())
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
 	}
 	fmt.Printf("Register local: %v to %d\n", dbname1, id)
 
-	db, err = GetDatabase(dbname2)
+	db2, err := GetDatabase(dbname2)
 
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
 	}
 
-	id, err = master.RegisterLocalNode(db, "test4.towerpower.co", jsonSystems_Nodes())
+	id, err = master.RegisterLocalNode(db2, "test4.towerpower.co", jsonSystems_Nodes())
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
 	}
 	fmt.Printf("Register local: %v to %d\n", dbname2, id)
 
+	fmt.Printf("REGISTER: TESTING CLOCKIDs\n")
+	id, err = master.GetMyClockID()
+	if err != nil {
+		fmt.Printf("PANIC %#v\n", err)
+		t.FailNow()
+	}
+	fmt.Printf("CLOCKIDs %d for %s\n", id, dbname0)
+
+	id, err = db1.GetMyClockID()
+	if err != nil {
+		fmt.Printf("PANIC %#v\n", err)
+		t.FailNow()
+	}
+	fmt.Printf("CLOCKIDs %d for %s\n", id, dbname1)
+
+	id, err = db2.GetMyClockID()
+	if err != nil {
+		fmt.Printf("PANIC %#v\n", err)
+		t.FailNow()
+	}
+	fmt.Printf("CLOCKIDs %d for %s\n", id, dbname2)
 }
 
 func TestNewTSN(t *testing.T) {

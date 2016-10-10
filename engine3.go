@@ -89,7 +89,7 @@ func registerMasterNode(dbconnect *sql.DB, in_url string, in_data []byte) int64 
 
 	checkErr("nodes.register", err)
 
-	return out_id
+	return registerLocalClockID(dbconnect, out_id)
 }
 
 // Register node
@@ -106,9 +106,6 @@ func registerLocalNode(master *sql.DB, dbconnect *sql.DB, in_url string, in_data
 	err := row.Scan(&out_id)
 
 	checkErr("master nodes.register", err)
-
-	row = dbconnect.QueryRow("select nodes.setmyclockid( $1 )", out_id)
-	checkErr("set clockid", err)
 
 	return registerLocalClockID(dbconnect, out_id)
 }
@@ -139,6 +136,22 @@ func registerLocalClockID(dbconnect *sql.DB, out_id int64) int64 {
 	_, err := dbconnect.Exec("select nodes.setmyclockid( $1 )", out_id)
 
 	checkErr("set clockid", err)
+
+	return out_id
+}
+
+// Register node
+//
+// Register clockiD to local node
+//
+func getMyClockID(dbconnect *sql.DB) int64 {
+
+	var out_id int64
+
+	row := dbconnect.QueryRow("select nodes.myclockid()")
+	checkRow(row)
+	err := row.Scan(&out_id)
+	checkErr("get my ClockID", err)
 
 	return out_id
 }
@@ -209,6 +222,46 @@ func (db *Database) RegisterLocalNode(local *Database, in_url string, in_data []
 	}()
 
 	out_value = registerLocalNode(db.dbconnect, local.dbconnect, in_url, in_data)
+
+	return out_value, err
+}
+
+// Intial Registration
+//
+// Package Export
+func (db *Database) RegisterLocalNodeToMaster(in_url string, in_data []byte) (out_value int64, err error) {
+
+	defer func() {
+
+		if r := recover(); r != nil {
+			// recover from panic
+			err = errors.New("error while register node")
+
+		}
+
+	}()
+
+	out_value = registerLocalNodeToMaster(db.dbconnect, in_url, in_data)
+
+	return out_value, err
+}
+
+// Intial Registration
+//
+// Package Export
+func (db *Database) GetMyClockID() (out_value int64, err error) {
+
+	defer func() {
+
+		if r := recover(); r != nil {
+			// recover from panic
+			err = errors.New("error while register node")
+
+		}
+
+	}()
+
+	out_value = getMyClockID(db.dbconnect)
 
 	return out_value, err
 }
