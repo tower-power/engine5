@@ -92,6 +92,10 @@ func registerMasterNode(dbconnect *sql.DB, in_url string, in_data []byte) int64 
 	return out_id
 }
 
+// Register node
+//
+// Register local node (with clockiD generation)
+//
 func registerLocalNode(master *sql.DB, dbconnect *sql.DB, in_url string, in_data []byte) int64 {
 
 	var out_id int64
@@ -104,6 +108,36 @@ func registerLocalNode(master *sql.DB, dbconnect *sql.DB, in_url string, in_data
 	checkErr("master nodes.register", err)
 
 	row = dbconnect.QueryRow("select nodes.setmyclockid( $1 )", out_id)
+	checkErr("set clockid", err)
+
+	return registerLocalClockID(dbconnect, out_id)
+}
+
+// Register node
+//
+// Register local node to master node (without clockiD generation)
+//
+func registerLocalNodeToMaster(master *sql.DB, in_url string, in_data []byte) int64 {
+
+	var out_id int64
+
+	row := master.QueryRow("select nodes.register( $1, $2 )", in_url, in_data)
+	checkRow(row)
+
+	err := row.Scan(&out_id)
+
+	checkErr("master nodes.register", err)
+
+	return out_id
+}
+
+// Register node
+//
+// Register clockiD to local node
+//
+func registerLocalClockID(dbconnect *sql.DB, out_id int64) int64 {
+	_, err := dbconnect.Exec("select nodes.setmyclockid( $1 )", out_id)
+
 	checkErr("set clockid", err)
 
 	return out_id
