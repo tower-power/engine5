@@ -55,33 +55,47 @@ func TestRegister(t *testing.T) {
 	var id int64
 
 	fmt.Printf("REGISTER:\n")
-	db, err := GetDatabase(dbname0)
+	master, err := GetDatabase(dbname0)
 
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
 	}
 
-	id, err = db.RegisterLocalNode("test3.towerpower.co", jsonSystems_Nodes())
+	id, err = master.RegisterMasterNode("master.towerpower.co", jsonSystems_Nodes())
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
 	}
-	fmt.Printf("Register %v to %d\n", dbname1, id)
+	fmt.Printf("Register master: %v to %d\n", dbname0, id)
 
-	db, err = GetDatabase(dbname1)
+	db, err := GetDatabase(dbname1)
 
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
 	}
 
-	id, err = db.RegisterLocalNode("test4.towerpower.co", jsonSystems_Nodes())
+	id, err = master.RegisterLocalNode(db, "test3.towerpower.co", jsonSystems_Nodes())
 	if err != nil {
 		fmt.Printf("PANIC %#v\n", err)
 		t.FailNow()
 	}
-	fmt.Printf("Register %v to %d\n", dbname2, id)
+	fmt.Printf("Register local: %v to %d\n", dbname1, id)
+
+	db, err = GetDatabase(dbname2)
+
+	if err != nil {
+		fmt.Printf("PANIC %#v\n", err)
+		t.FailNow()
+	}
+
+	id, err = master.RegisterLocalNode(db, "test4.towerpower.co", jsonSystems_Nodes())
+	if err != nil {
+		fmt.Printf("PANIC %#v\n", err)
+		t.FailNow()
+	}
+	fmt.Printf("Register local: %v to %d\n", dbname2, id)
 
 }
 

@@ -76,9 +76,9 @@ func newTSN2(dbconnect *sql.DB) int64 {
 
 // Register node
 //
-// Register node at central server locally
+// Register master node
 //
-func registerLocalNode(dbconnect *sql.DB, in_url string, in_data []byte) int64 {
+func registerMasterNode(dbconnect *sql.DB, in_url string, in_data []byte) int64 {
 
 	var out_id int64
 
@@ -88,6 +88,23 @@ func registerLocalNode(dbconnect *sql.DB, in_url string, in_data []byte) int64 {
 	err := row.Scan(&out_id)
 
 	checkErr("nodes.register", err)
+
+	return out_id
+}
+
+func registerLocalNode(master *sql.DB, dbconnect *sql.DB, in_url string, in_data []byte) int64 {
+
+	var out_id int64
+
+	row := master.QueryRow("select nodes.register( $1, $2 )", in_url, in_data)
+	checkRow(row)
+
+	err := row.Scan(&out_id)
+
+	checkErr("master nodes.register", err)
+
+	row = dbconnect.QueryRow("select nodes.setmyclockid( $1 )", out_id)
+	checkErr("set clockid", err)
 
 	return out_id
 }
@@ -125,7 +142,7 @@ func (db *Database) NewNodesTSN() (tsn int64, err error) {
 // Intial Registration
 //
 // Package Export
-func (db *Database) RegisterLocalNode(in_url string, in_data []byte) (out_value int64, err error) {
+func (db *Database) RegisterMasterNode(in_url string, in_data []byte) (out_value int64, err error) {
 
 	defer func() {
 
@@ -137,7 +154,27 @@ func (db *Database) RegisterLocalNode(in_url string, in_data []byte) (out_value 
 
 	}()
 
-	out_value = registerLocalNode(db.dbconnect, in_url, in_data)
+	out_value = registerMasterNode(db.dbconnect, in_url, in_data)
+
+	return out_value, err
+}
+
+// Intial Registration
+//
+// Package Export
+func (db *Database) RegisterLocalNode(local *Database, in_url string, in_data []byte) (out_value int64, err error) {
+
+	defer func() {
+
+		if r := recover(); r != nil {
+			// recover from panic
+			err = errors.New("error while register node")
+
+		}
+
+	}()
+
+	out_value = registerLocalNode(db.dbconnect, local.dbconnect, in_url, in_data)
 
 	return out_value, err
 }

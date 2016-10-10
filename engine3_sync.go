@@ -128,6 +128,7 @@ func getOpLogs(dbconnect *sql.DB, in_clockid int64, in_tsn int64) Oplogs {
 
 /*
  * Enti-entropy sync from dbconnect1 to dbconnect2
+ * (test)
  */
 func databaseSync(dbconnect1 *sql.DB, dbconnect2 *sql.DB) {
 	var hwms1 HighWaterMarks
